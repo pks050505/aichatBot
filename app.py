@@ -5,7 +5,7 @@ from langchain_community.tools.tavily_search import TavilySearchResults
 from langgraph.prebuilt import create_react_agent
 from langchain_core.messages import HumanMessage
 from pydantic import BaseModel
-
+from google.cloud import storage
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -34,13 +34,32 @@ agent = create_react_agent(
 class QueryRequest(BaseModel):
     query: str
 
+# Function to save response to Google Cloud Storage
+def save_to_gcs(bucket_name, file_name, content):
+    try:
+        client = storage.Client()
+        bucket = client.get_bucket(bucket_name)
+        blob = bucket.blob(file_name)
+        blob.upload_from_string(content)
+        return True
+    except Exception as e:
+        print(f"Failed to save to GCS: {str(e)}")
+        return False
+
 # API endpoint to handle queries
 @app.post("/chat")
 async def chat(request: QueryRequest):
     try:
         state = {"messages": [HumanMessage(content=request.query)]}
         response = agent.invoke(state)
-        return {"response": response['messages'][-1].content}
+        content = response['messages'][-1].content
+        # Format response as a list of strings
+        formatted = [line.strip('- ').strip() for line in content.split('\n') if line.strip()]
+        # Save to GCS
+        bucket_name = "polytechnic-b89d6-chatbot-storage"
+        file_name = f"response_{request.query[:10]}_{os.urandom(4).hex()}.txt"
+        save_to_gcs(bucket_name, file_name, str(formatted))
+        return {"response": formatted}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
