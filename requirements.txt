@@ -5,3 +5,4 @@ langchain-groq==0.1.9
 langchain-community==0.2.17
 langgraph==0.2.14
 pydantic==2.9.2
+google-cloud-storage==2.18.2
