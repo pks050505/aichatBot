@@ -6,6 +6,7 @@ from langgraph.prebuilt import create_react_agent
 from langchain_core.messages import HumanMessage
 from pydantic import BaseModel
 
+
 # Initialize FastAPI app
 app = FastAPI()
 
