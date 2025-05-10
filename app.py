@@ -1,6 +1,7 @@
 import os
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
+from fastapi.middleware.cors import CORSMiddleware
 from langchain_groq import ChatGroq
 from langchain_community.tools.tavily_search import TavilySearchResults
 from langgraph.prebuilt import create_react_agent
@@ -11,13 +12,28 @@ from google.cloud import storage
 # Initialize FastAPI app
 app = FastAPI()
 
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Set up API keys
 GROQ_API_KEY = os.environ.get('GROQ_API_KEY')
 TAVILY_API_KEY = os.environ.get('TAVILY_API_KEY')
 
+# Validate API keys
+if not GROQ_API_KEY:
+    raise ValueError("GROQ_API_KEY environment variable not set")
+if not TAVILY_API_KEY:
+    raise ValueError("TAVILY_API_KEY environment variable not set")
+
 # Initialize LLM and tools
-groq_llm = ChatGroq(model='llama-3.3-70b-versatile')
-search_tool = TavilySearchResults(max_results=2)
+groq_llm = ChatGroq(model='llama-3.3-70b-versatile', api_key=GROQ_API_KEY)
+search_tool = TavilySearchResults(max_results=2, api_key=TAVILY_API_KEY)
 
 # System prompt for crypto trading expert
 system_prompt = """
@@ -45,7 +61,7 @@ def save_to_gcs(bucket_name, file_name, content):
         return True
     except Exception as e:
         print(f"Failed to save to GCS: {str(e)}")
-        return False
+        raise
 
 # HTML UI for root endpoint
 html_content = """
@@ -54,7 +70,7 @@ html_content = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crypto Chatbot </title>
+    <title>Crypto Guru Chatbot 💰</title>
     <style>
         body {
             font-family: 'Comic Sans MS', Arial, sans-serif;
@@ -150,7 +166,7 @@ html_content = """
 </head>
 <body>
     <h1>Crypto Guru Chatbot 💰</h1>
-    <p>Hi,  trader! Pooche digital coins ke baare mein, jaise Bitcoin ya Ethereum! 💎</p>
+    <p>Hi, chhote trader! Pooche digital coins ke baare mein, jaise Bitcoin ya Ethereum! 💎</p>
     <div class="input-container">
         <input type="text" id="query" placeholder="e.g., Bitcoin kya hai? Ya market kaisa hai?">
         <button onclick="sendQuery()">Batao!</button>
@@ -164,7 +180,7 @@ html_content = """
             const query = queryInput.value.trim();
 
             if (!query) {
-                responseDiv.innerHTML = '<p class="error">Arre, koi sawaal toh pooch,  trader!</p>';
+                responseDiv.innerHTML = '<p class="error">Arre, koi sawaal toh pooch, chhote trader!</p>';
                 return;
             }
 
@@ -185,10 +201,12 @@ html_content = """
                     responseDiv.innerHTML = '<ul>' + items.map(item => `<li>${item}</li>`).join('') + '</ul>';
                 } else {
                     const errorText = await response.text();
+                    console.error('Fetch error:', errorText);
                     responseDiv.innerHTML = `<p class="error">Oops! Kuch gadbad ho gaya: ${errorText}</p>`;
                 }
             } catch (error) {
-                responseDiv.innerHTML = `<p class="error">Connection mein problem: ${error.message}</p>';
+                console.error('Network error:', error);
+                responseDiv.innerHTML = `<p class="error">Connection mein problem: ${error.message}</p>`;
             }
         }
     </script>
@@ -216,7 +234,7 @@ async def chat(request: QueryRequest):
         save_to_gcs(bucket_name, file_name, str(formatted))
         return {"response": formatted}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Error processing request: {str(e)}")
 
 # Health check endpoint
 @app.get("/health")
