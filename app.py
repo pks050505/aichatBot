@@ -165,10 +165,10 @@ html_content = """
     </style>
 </head>
 <body>
-    <h1>Crypto Guru Chatbot 💰</h1>
-    <p>Hi, chhote trader! Pooche digital coins ke baare mein, jaise Bitcoin ya Ethereum! 💎</p>
+    <h1>Crypto  Chatbot </h1>
+    <p>Hi, purushottam! Pooche digital coins ke baare mein, jaise Bitcoin ya Ethereum! Answer like a 10 year old  💎</p>
     <div class="input-container">
-        <input type="text" id="query" placeholder="e.g., Bitcoin kya hai? Ya market kaisa hai?">
+        <input type="text" id="query" placeholder="e.g., Bitcoin kya hai? Ya market me kease loss kre?">
         <button onclick="sendQuery()">Batao!</button>
     </div>
     <div id="response"></div>
@@ -180,11 +180,11 @@ html_content = """
             const query = queryInput.value.trim();
 
             if (!query) {
-                responseDiv.innerHTML = '<p class="error">Arre, koi sawaal toh pooch, chhote trader!</p>';
+                responseDiv.innerHTML = '<p class="error">Arre, koi sawaal toh pooch,  trader!</p>';
                 return;
             }
 
-            responseDiv.innerHTML = '<p class="loading">Thoda wait karo, jawab dhoond raha hoon... ⏳</p>';
+            responseDiv.innerHTML = '<p class="loading">Thoda Sabar karo, jawab dhoond raha hoon... ⏳</p>';
 
             try {
                 const response = await fetch('/chat', {
@@ -202,7 +202,7 @@ html_content = """
                 } else {
                     const errorText = await response.text();
                     console.error('Fetch error:', errorText);
-                    responseDiv.innerHTML = `<p class="error">Oops! Kuch gadbad ho gaya: ${errorText}</p>`;
+                    responseDiv.innerHTML = `<p class="error">Oops! Code ke lage pade h: ${errorText}</p>`;
                 }
             } catch (error) {
                 console.error('Network error:', error);
